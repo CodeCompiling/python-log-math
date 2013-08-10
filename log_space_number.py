@@ -7,6 +7,8 @@ from __future__ import unicode_literals
 import math
 import numbers
 
+_NEG_INF = -float('inf')
+
 def _convert_to_logspace(val):
     """ Converts a given value to log space if it's not there already """
     if not isinstance(val, numbers.Number):
@@ -22,7 +24,7 @@ def _convert_to_logspace(val):
 
 class LogSpaceNumber(numbers.Number):
 
-    _NEG_INF = -float('inf')
+    __slots__ = ["_value"]
 
     def __init__(self, value=0.0, log_value=None):
         if log_value is not None and value != 0.0:
@@ -69,3 +71,37 @@ class LogSpaceNumber(numbers.Number):
 
     def __hash__(self):
         return hash(repr(self.value))
+
+    def __nonzero__(self):
+        return self._value != __NEG_INF
+
+    def __add__(self, other):
+        raise NotImplementedError
+
+    def __sub__(self, other):
+        raise NotImplementedError
+
+    def __mul__(self, other):
+        return LogSpaceNumber(log_value=self._value+_convert_to_logspace(other))
+
+    def __div__(self, other):
+        return LogSpaceNumber(log_value=self._value-_convert_to_logspace(other))
+
+    def __truediv__(self, other):
+        return self.__div__(other)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __rsub__(self, other):
+        raise NotImplementedError
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __rdiv__(self, other):
+        return LogSpaceNumber(log_value=_convert_to_logspace(other)-self._value)
+
+    def __rtruediv(self, other):
+        return self.__rdiv__(other)
+
