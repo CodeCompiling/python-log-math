@@ -102,6 +102,27 @@ class LogSpaceNumber(numbers.Number):
     def __rdiv__(self, other):
         return LogSpaceNumber(log_value=_convert_to_logspace(other)-self._value)
 
-    def __rtruediv(self, other):
+    def __rtruediv__(self, other):
         return self.__rdiv__(other)
+
+    def __iadd__(self, other):
+        raise NotImplementedError
+
+    def __isub__(self, other):
+        raise NotImplementedError
+
+    def __imul__(self, other):
+        self._value += _convert_to_logspace(other)
+        return self
+
+    def __idiv__(self, other):
+        self._value -= _convert_to_logspace(other)
+        return self
+
+    def __itruediv__(self, other):
+        return self.__idiv__(other)
+
+    def __coerce__(self, other):
+        if isinstance(other, numbers.Number):
+            return (self, LogSpaceNumber(other))
 
