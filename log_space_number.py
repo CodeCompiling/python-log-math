@@ -50,6 +50,13 @@ class LogSpaceNumber(numbers.Number):
         else:
             self._value = _convert_to_logspace(value)
 
+    def from_logspace(self):
+        """ Returns the actual, non-logspace value for this number.
+
+        MAY LOSE PRECISION. """
+
+        return math.exp(self._value)
+
     def __repr__(self):
         return "LogSpaceNumber(log_value={0})".format(self._value)
 
@@ -108,6 +115,15 @@ class LogSpaceNumber(numbers.Number):
     def __truediv__(self, other):
         return self.__div__(other)
 
+    def __pow__(self, other):
+        if isinstance(other, LogSpaceNumber):
+            return LogSpaceNumber(
+                log_value=other.from_logspace() * self._value)
+        elif isinstance(other, numbers.Number):
+            return LogSpaceNumber(
+                log_value=other * self._value)
+        raise ValueError("cannot take pow to a non-number")
+
     def __radd__(self, other):
         return self + other
 
@@ -124,24 +140,9 @@ class LogSpaceNumber(numbers.Number):
     def __rtruediv__(self, other):
         return self.__rdiv__(other)
 
-    def __iadd__(self, other):
-        self._value = _logspace_add(self._value, _convert_to_logspace(other))
-        return self
-
-    def __isub__(self, other):
-        self._value = _logspace_sub(self._value, _convert_to_logspace(other))
-        return self
-
-    def __imul__(self, other):
-        self._value += _convert_to_logspace(other)
-        return self
-
-    def __idiv__(self, other):
-        self._value -= _convert_to_logspace(other)
-        return self
-
-    def __itruediv__(self, other):
-        return self.__idiv__(other)
+    def __rpow__(self, other):
+        return LogSpaceNumber(
+            log_value=self.from_logspace() * _convert_to_logspace(other))
 
     def __coerce__(self, other):
         if isinstance(other, numbers.Number):
