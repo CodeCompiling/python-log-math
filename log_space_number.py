@@ -22,6 +22,22 @@ def _convert_to_logspace(val):
     else:
         return math.log(val)
 
+def _logspace_add(x, y):
+    if x == _NEG_INF:
+        return y
+    elif y == _NEG_INF:
+        return x
+    return max(x, y) + math.log1p(math.exp(-math.fabs(x - y)))
+
+def _logspace_sub(x, y):
+    if x < y:
+        raise ValueError("Cannot take the log of a negative number.")
+    elif x == y:
+        return _NEG_INF
+    elif y == _NEG_INF:
+        return x
+    return x + math.log1p(-math.exp(y-x))
+
 class LogSpaceNumber(numbers.Number):
 
     __slots__ = ["_value"]
@@ -76,10 +92,12 @@ class LogSpaceNumber(numbers.Number):
         return self._value != __NEG_INF
 
     def __add__(self, other):
-        raise NotImplementedError
+        return LogSpaceNumber(
+            log_value=_logspace_add(self._value, _convert_to_logspace(other)))
 
     def __sub__(self, other):
-        raise NotImplementedError
+        return LogSpaceNumber(
+            log_value=_logspace_sub(self._value, _convert_to_logspace(other)))
 
     def __mul__(self, other):
         return LogSpaceNumber(log_value=self._value+_convert_to_logspace(other))
@@ -94,7 +112,8 @@ class LogSpaceNumber(numbers.Number):
         return self + other
 
     def __rsub__(self, other):
-        raise NotImplementedError
+        return LogSpaceNumber(
+            log_value=_logspace_sub(_convert_to_logspace(other), self._value))
 
     def __rmul__(self, other):
         return self * other
@@ -106,10 +125,12 @@ class LogSpaceNumber(numbers.Number):
         return self.__rdiv__(other)
 
     def __iadd__(self, other):
-        raise NotImplementedError
+        self._value = _logspace_add(self._value, _convert_to_logspace(other))
+        return self
 
     def __isub__(self, other):
-        raise NotImplementedError
+        self._value = _logspace_sub(self._value, _convert_to_logspace(other))
+        return self
 
     def __imul__(self, other):
         self._value += _convert_to_logspace(other)
@@ -125,4 +146,3 @@ class LogSpaceNumber(numbers.Number):
     def __coerce__(self, other):
         if isinstance(other, numbers.Number):
             return (self, LogSpaceNumber(other))
-
