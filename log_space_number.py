@@ -11,6 +11,7 @@ _NEG_INF = -float('inf')
 
 def _convert_to_logspace(val):
     """ Converts a given value to log space if it's not there already """
+
     if not isinstance(val, numbers.Number):
         raise TypeError("Must be numeric.")
     elif isinstance(val, LogSpaceNumber):
@@ -23,6 +24,8 @@ def _convert_to_logspace(val):
         return math.log(val)
 
 def _logspace_add(x, y):
+    """ Takes two log-space numbers, and returns the log-space sum """
+    
     if x == _NEG_INF:
         return y
     elif y == _NEG_INF:
@@ -30,6 +33,10 @@ def _logspace_add(x, y):
     return max(x, y) + math.log1p(math.exp(-math.fabs(x - y)))
 
 def _logspace_sub(x, y):
+    """ Takes two log-space numbers, and returns the log-space difference.
+
+    Requirement: x >= y """
+    
     if x < y:
         raise ValueError("Cannot take the log of a negative number.")
     elif x == y:
@@ -40,15 +47,17 @@ def _logspace_sub(x, y):
 
 class LogSpaceNumber(numbers.Number):
 
-    __slots__ = ["_value"]
+    __slots__ = ["_value", "_is_pos"]
 
-    def __init__(self, value=0.0, log_value=None):
+    def __init__(self, value=0.0, log_value=None, log_pos=True):
         if log_value is not None and value != 0.0:
             raise ValueError("Cannot initialize with both value and log_value")
         elif log_value is not None:
             self._value = log_value
+            self._is_pos = log_pos
         else:
             self._value = _convert_to_logspace(value)
+            self.is_pos_ = True
 
     def from_logspace(self):
         """ Returns the actual, non-logspace value for this number.
