@@ -9,6 +9,14 @@ import numbers
 
 _NEG_INF = -float('inf')
 
+def _pos_num(val):
+    if not isinstance(val, numbers.Number):
+        raise TypeError("Must be numeric.")
+    elif isinstance(val, LogSpaceNumber):
+        return val._is_pos
+    else:
+        return val >= 0.0
+
 def _convert_to_logspace(val):
     """ Converts a given value to log space if it's not there already """
 
@@ -50,29 +58,37 @@ class LogSpaceNumber(numbers.Number):
     __slots__ = ["_value", "_is_pos"]
 
     def __init__(self, value=0.0, log_value=None, log_pos=True):
-        if log_value is not None and value != 0.0:
-            raise ValueError("Cannot initialize with both value and log_value")
+        if (log_value is not None or log_pos is not None) and value != 0.0:
+            raise ValueError("Cannot initialize with both value and "
+                             "log_value or log_pos")
         elif log_value is not None:
             self._value = log_value
             self._is_pos = log_pos
         else:
-            self._value = _convert_to_logspace(value)
-            self.is_pos_ = True
+            self._value = _convert_to_logspace(math.fabs(value))
+            self._is_pos = _pos_num(value)
 
     def from_logspace(self):
         """ Returns the actual, non-logspace value for this number.
 
         MAY LOSE PRECISION. """
 
-        return math.exp(self._value)
+        if self._is_pos:
+            return math.exp(self._value)
+        else:
+            return - math.exp(self._value)
 
     def __repr__(self):
-        return "LogSpaceNumber(log_value={0})".format(self._value)
+        return "LogSpaceNumber(log_value={0}, log_pos={1})".format(
+            self._value, self._is_pos)
 
     def __unicode__(self):
         if self._value == _NEG_INF:
-            return "0"
-        return "exp({0})".format(self._value)
+            return "0.0"
+        elif self._is_pos:
+            return "exp({0})".format(self._value)
+        else:
+            return "-exp({0})".format(self._value)
 
     def __str__(self):
         return self.__unicode__()
@@ -81,28 +97,70 @@ class LogSpaceNumber(numbers.Number):
         return self.__unicode__().encode("utf-8")
 
     def __lt__(self, other):
-        return self._value < _convert_to_logspace(other)
+        other_pos = _pos_num(other)
+        if self._is_pos and other_pos:
+            return self._value < _convert_to_logspace(other)
+        elif self._is_pos: # this is positive, other is negative
+            return False
+        elif other_pos: # this is negative, other is positive
+            return True
+        else: # both are negative
+            return self._value > _convert_to_logspace(math.fabs(other))
 
     def __le__(self, other):
-        return self._value <= _convert_to_logspace(other)
+        other_pos = _pos_num(other)
+        if self._is_pos and other_pos:
+            return self._value <= _convert_to_logspace(other)
+        elif self._is_pos: # this is positive, other is negative
+            return False
+        elif other_pos: # this is negative, other is positive
+            return True
+        else: # both are negative
+            return self._value >= _convert_to_logspace(math.fabs(other))
 
     def __eq__(self, other):
-        return self._value == _convert_to_logspace(other)
+        return (self._value == _convert_to_logspace(math.fabs(other)) and
+                self._is_pos == _pos_num(other))
 
     def __ne__(self, other):
-        return self._value <> _convert_to_logspace(other)
+        return (self._value <> _convert_to_logspace(math.fabs(other)) or
+                self._is_pos <> _pos_num(other))
 
     def __gt__(self, other):
-        return self._value > _convert_to_logspace(other)
+        other_pos = _pos_num(other)
+        if self._is_pos and other_pos:
+            return self._value > _convert_to_logspace(other)
+        elif self._is_pos: # this is positive, other is negative
+            return True
+        elif other_pos: # this is negative, other is positive
+            return False
+        else: # both are negative
+            return self._value < _convert_to_logspace(math.fabs(other))
 
     def __ge__(self, other):
-        return self._value >= _convert_to_logspace(other)
+        other_pos = _pos_num(other)
+        if self._is_pos and other_pos:
+            return self._value >= _convert_to_logspace(other)
+        elif self._is_pos: # this is positive, other is negative
+            return True
+        elif other_pos: # this is negative, other is positive
+            return False
+        else: # both are negative
+            return self._value <= _convert_to_logspace(math.fabs(other))
 
     def __cmp__(self, other):
-        return cmp(self._value, _convert_to_logspace(other))
+        sign_comparison = cmp(self._is_pos, _pos_num(other))
+        if sign_comparison:
+            return sign_comparison
+
+        # signs must be the same
+        elif self._is_pos:
+            return cmp(self._value, _convert_to_logspace(other))
+        else:
+            return -cmp(self.value, _convert_to_logspace(math.fabs(other)))
 
     def __hash__(self):
-        return hash(repr(self.value))
+        return hash((self._is_pos, repr(self._value)))
 
     def __nonzero__(self):
         return self._value != __NEG_INF
