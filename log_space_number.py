@@ -154,9 +154,9 @@ class LogSpaceNumber(numbers.Number):
             return sign_comparison
 
         # signs must be the same
-        elif self._is_pos:
+        elif self._is_pos: # both positive
             return cmp(self._value, _convert_to_logspace(other))
-        else:
+        else: # both negative
             return -cmp(self.value, _convert_to_logspace(math.fabs(other)))
 
     def __hash__(self):
@@ -166,8 +166,37 @@ class LogSpaceNumber(numbers.Number):
         return self._value != __NEG_INF
 
     def __add__(self, other):
-        return LogSpaceNumber(
-            log_value=_logspace_add(self._value, _convert_to_logspace(other)))
+        other_pos = _pos_num(other)
+        if self._is_pos and _pos_num:
+            return LogSpaceNumber(
+                log_value=_logspace_add(self._value,
+                                        _convert_to_logspace(other)),
+                log_pos=True)
+        elif self._is_pos: # this is positive, other is negative
+            other_val = _convert_to_logspace(math.fabs(other))
+            if self._value > other_val:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(self._value, other_val),
+                    log_pos=True)
+            else:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(other_val, self._value),
+                    log_pos=False)
+        elif other_pos: # this is negative, other is positive
+            other_val = _convert_to_logspace(other)
+            if self._value > other_val:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(self._value, other_val),
+                    log_pos=False)
+            else:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(other_val, self._value),
+                    log_pos=True)
+        else: # both are negative
+            return LogSpaceNumber(
+                log_value=_logspace_add(self._value,
+                                        _convert_to_logspace(math.fabs(other))),
+                log_pos=False)
 
     def __sub__(self, other):
         return LogSpaceNumber(
