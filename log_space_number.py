@@ -76,7 +76,7 @@ class LogSpaceNumber(numbers.Number):
         if self._is_pos:
             return math.exp(self._value)
         else:
-            return - math.exp(self._value)
+            return -math.exp(self._value)
 
     def __repr__(self):
         return "LogSpaceNumber(log_value={0}, log_pos={1})".format(
@@ -258,12 +258,16 @@ class LogSpaceNumber(numbers.Number):
         return self.__div__(other)
 
     def __pow__(self, other):
+        if not self._is_pos:
+            raise NotImplemented("raise negative number to a power")
         if isinstance(other, LogSpaceNumber):
             return LogSpaceNumber(
-                log_value=other.from_logspace() * self._value)
+                log_value=other.from_logspace() * self._value,
+                log_pos=self._is_pos)
         elif isinstance(other, numbers.Number):
             return LogSpaceNumber(
-                log_value=other * self._value)
+                log_value=other * self._value,
+                log_pos=self._is_pos)
         raise ValueError("cannot take pow to a non-number")
 
     def __radd__(self, other):
