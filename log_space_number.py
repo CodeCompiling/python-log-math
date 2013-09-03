@@ -288,6 +288,18 @@ class LogSpaceNumber(numbers.Number):
     def __rpow__(self, other):
         return LogSpaceNumber(other) ** self
 
+    def __neg__(self):
+        return LogSpaceNumber(log_value=self._value, log_pos=!self._is_pos)
+
+    def __pos__(self):
+        return self
+
+    def __abs__(self):
+        return LogSpaceNumber(log_value=self._value, log_pos=True)
+
+    def __float__(self):
+        return self.from_logspace()
+
     def __coerce__(self, other):
         if isinstance(other, numbers.Number):
             return (self, LogSpaceNumber(other))
