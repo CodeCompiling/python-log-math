@@ -235,10 +235,24 @@ class LogSpaceNumber(numbers.Number):
                     log_pos=True)
 
     def __mul__(self, other):
-        return LogSpaceNumber(log_value=self._value+_convert_to_logspace(other))
+        if self.pos_num != _pos_num(other): # different signs
+            return LogSpaceNumber(
+                log_value=self._value+_convert_to_logspace(abs(other)),
+                log_pos=False)
+        else: # same sign
+            return LogSpaceNumber(
+                log_value=self._value+_convert_to_logspace(abs(other)),
+                log_pos=True)
 
     def __div__(self, other):
-        return LogSpaceNumber(log_value=self._value-_convert_to_logspace(other))
+        if self.pos_num != _pos_num(other): # different signs
+            return LogSpaceNumber(
+                log_value=self._value-_convert_to_logspace(abs(other)),
+                log_pos=False)
+        else: # same sign
+            return LogSpaceNumber(
+                log_value=self._value-_convert_to_logspace(abs(other)),
+                log_pos=True)
 
     def __truediv__(self, other):
         return self.__div__(other)
@@ -256,21 +270,19 @@ class LogSpaceNumber(numbers.Number):
         return self + other
 
     def __rsub__(self, other):
-        return LogSpaceNumber(
-            log_value=_logspace_sub(_convert_to_logspace(other), self._value))
+        return LogSpaceNumber(other) - self
 
     def __rmul__(self, other):
         return self * other
 
     def __rdiv__(self, other):
-        return LogSpaceNumber(log_value=_convert_to_logspace(other)-self._value)
+        return LogSpaceNumber(other) / self
 
     def __rtruediv__(self, other):
         return self.__rdiv__(other)
 
     def __rpow__(self, other):
-        return LogSpaceNumber(
-            log_value=self.from_logspace() * _convert_to_logspace(other))
+        return LogSpaceNumber(other) ** self
 
     def __coerce__(self, other):
         if isinstance(other, numbers.Number):
