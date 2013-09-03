@@ -65,7 +65,7 @@ class LogSpaceNumber(numbers.Number):
             self._value = log_value
             self._is_pos = log_pos
         else:
-            self._value = _convert_to_logspace(math.fabs(value))
+            self._value = _convert_to_logspace(abs(value))
             self._is_pos = _pos_num(value)
 
     def from_logspace(self):
@@ -105,7 +105,7 @@ class LogSpaceNumber(numbers.Number):
         elif other_pos: # this is negative, other is positive
             return True
         else: # both are negative
-            return self._value > _convert_to_logspace(math.fabs(other))
+            return self._value > _convert_to_logspace(abs(other))
 
     def __le__(self, other):
         other_pos = _pos_num(other)
@@ -116,14 +116,14 @@ class LogSpaceNumber(numbers.Number):
         elif other_pos: # this is negative, other is positive
             return True
         else: # both are negative
-            return self._value >= _convert_to_logspace(math.fabs(other))
+            return self._value >= _convert_to_logspace(abs(other))
 
     def __eq__(self, other):
-        return (self._value == _convert_to_logspace(math.fabs(other)) and
+        return (self._value == _convert_to_logspace(abs(other)) and
                 self._is_pos == _pos_num(other))
 
     def __ne__(self, other):
-        return (self._value <> _convert_to_logspace(math.fabs(other)) or
+        return (self._value <> _convert_to_logspace(abs(other)) or
                 self._is_pos <> _pos_num(other))
 
     def __gt__(self, other):
@@ -135,7 +135,7 @@ class LogSpaceNumber(numbers.Number):
         elif other_pos: # this is negative, other is positive
             return False
         else: # both are negative
-            return self._value < _convert_to_logspace(math.fabs(other))
+            return self._value < _convert_to_logspace(abs(other))
 
     def __ge__(self, other):
         other_pos = _pos_num(other)
@@ -146,7 +146,7 @@ class LogSpaceNumber(numbers.Number):
         elif other_pos: # this is negative, other is positive
             return False
         else: # both are negative
-            return self._value <= _convert_to_logspace(math.fabs(other))
+            return self._value <= _convert_to_logspace(abs(other))
 
     def __cmp__(self, other):
         sign_comparison = cmp(self._is_pos, _pos_num(other))
@@ -157,7 +157,7 @@ class LogSpaceNumber(numbers.Number):
         elif self._is_pos: # both positive
             return cmp(self._value, _convert_to_logspace(other))
         else: # both negative
-            return -cmp(self.value, _convert_to_logspace(math.fabs(other)))
+            return -cmp(self.value, _convert_to_logspace(abs(other)))
 
     def __hash__(self):
         return hash((self._is_pos, repr(self._value)))
@@ -173,7 +173,7 @@ class LogSpaceNumber(numbers.Number):
                                         _convert_to_logspace(other)),
                 log_pos=True)
         elif self._is_pos: # this is positive, other is negative
-            other_val = _convert_to_logspace(math.fabs(other))
+            other_val = _convert_to_logspace(abs(other))
             if self._value > other_val:
                 return LogSpaceNumber(
                     log_value=_logspace_sub(self._value, other_val),
@@ -195,12 +195,44 @@ class LogSpaceNumber(numbers.Number):
         else: # both are negative
             return LogSpaceNumber(
                 log_value=_logspace_add(self._value,
-                                        _convert_to_logspace(math.fabs(other))),
+                                        _convert_to_logspace(abs(other))),
                 log_pos=False)
 
     def __sub__(self, other):
-        return LogSpaceNumber(
-            log_value=_logspace_sub(self._value, _convert_to_logspace(other)))
+        other_pos = _pos_num(other)
+        if self._is_pos and other_pos:
+            other_val = _convert_to_logspace(other)
+            if self._value > other_val:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(self._value, other_val),
+                    log_pos=True)
+            else:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(other_val, self._value),
+                    log_pos=False)
+
+        elif self._is_pos: # this is positive, other is negative
+            return LogSpaceNumber(
+                log_value=_logspace_add(self._value,
+                                        _convert_to_logspace(abs(other))),
+                log_pos=True)
+            
+        elif other_pos: # this is negative, other is positive
+            return LogSpaceNumber(
+                log_value=_logspace_add(self._value,
+                                        _convert_to_logspace(other)),
+                log_pos=False)
+            
+        else: # both are negative
+            other_val = _convert_to_logspace(abs(other))
+            if self._value > other_val:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(self._value, other_val),
+                    log_pos=False)
+            else:
+                return LogSpaceNumber(
+                    log_value=_logspace_sub(other_val, self._value),
+                    log_pos=True)
 
     def __mul__(self, other):
         return LogSpaceNumber(log_value=self._value+_convert_to_logspace(other))
